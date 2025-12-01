@@ -2,9 +2,7 @@ name: CI/CD - simple-java-maven-app
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   build-test-publish:
