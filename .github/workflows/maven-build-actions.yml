@@ -91,7 +91,7 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --instance-ids $INSTANCE_ID \
             --comment "Deploy simple-java-maven-app via Docker" \
-            --parameters commands="sudo docker pull $IMAGE_NAME:$APP_VERSION","sudo docker stop simple-java-app || true","sudo docker rm simple-java-app || true","sudo docker run -d --name simple-java-app -p 8080:8080 $IMAGE_NAME:$APP_VERSION" \
+            --parameters commands="sudo docker pull $IMAGE_NAME:$APP_VERSION","sudo docker stop java-app || true","sudo docker rm simple-java-app || true","sudo docker run -d --name simple-java-app -p 8080:8080 $IMAGE_NAME:$APP_VERSION" \
             --timeout-seconds 600 \
             --region $AWS_REGION
 
