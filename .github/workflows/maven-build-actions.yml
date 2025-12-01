@@ -4,6 +4,10 @@ on:
   push:
     branches: [ master ]
 
+permissions:
+  id-token: write    # needed for OIDC → AWS STS
+  contents: read
+
 jobs:
   build-test-publish:
     runs-on: ubuntu-latest
@@ -63,4 +67,31 @@ jobs:
         run: |
           docker push $IMAGE_NAME:${APP_VERSION}
           docker push $IMAGE_NAME:latest
+
+  deploy-to-ec2:
+    needs: build-test-publish        # run only if build+push succeeded
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app
+      APP_VERSION: 1.0.${{ github.run_number }}
+      AWS_REGION: eu-central-1
+      INSTANCE_ID: i-073c65698da82e1b6 
+
+    steps:
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::043393980221:role/GitHubActionsDeployRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy container via SSM
+        run: |
+          aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --instance-ids $INSTANCE_ID \
+            --comment "Deploy simple-java-maven-app via Docker" \
+            --parameters commands="sudo docker pull $IMAGE_NAME:$APP_VERSION","sudo docker stop simple-java-app || true","sudo docker rm simple-java-app || true","sudo docker run -d --name simple-java-app -p 8080:8080 $IMAGE_NAME:$APP_VERSION" \
+            --timeout-seconds 600 \
+            --region $AWS_REGION
 
